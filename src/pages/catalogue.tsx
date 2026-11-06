@@ -1,3 +1,4 @@
+import photoCredits from "../photo-credits.json"
 import { CATEGORIES, infoPages, inr, LANGUAGES, products, PUJA_TYPES, SUPPORT_PHONE, type Page, type Puja } from "../data"
 import { totalsFor, useStore, type Filters } from "../store"
 import { EmptyState, FilterButton, filterCount, Icon, PageTitle, PujaCard, Badge } from "../ui"
@@ -229,6 +230,41 @@ export function Samagri() {
         <button type="button" className="button small" onClick={() => go("plan")}>
           Review my plan <Icon name="arrow" size={16} />
         </button>
+      </div>
+    </main>
+  )
+}
+
+export function PhotoCredits() {
+  return (
+    <main className="page-shell">
+      <PageTitle
+        overline="PHOTO CREDITS"
+        title="Photography"
+        text="The puja photos on PujaNow come from Wikimedia Commons. We thank the photographers for sharing their work."
+      />
+      <div className="content-card">
+        <ul className="credit-list">
+          {photoCredits.map((c) => (
+            <li key={c.id}>
+              <b>{c.usedFor}</b>
+              <span>
+                “{c.title}” by {c.author}, licensed under{" "}
+                {c.licenseUrl ? (
+                  <a href={c.licenseUrl} target="_blank" rel="noopener noreferrer">
+                    {c.license}
+                  </a>
+                ) : (
+                  c.license
+                )}
+                .{" "}
+                <a href={c.source} target="_blank" rel="noopener noreferrer">
+                  View the original
+                </a>
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
     </main>
   )

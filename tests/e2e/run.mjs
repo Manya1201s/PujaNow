@@ -37,7 +37,7 @@ const runSuite = (args) =>
 
 const suites = process.argv[2] === "audit"
   ? [["audit.mjs"], ["audit.mjs", "mobile"]]
-  : [["journeys.mjs"], ["workflow.mjs"], ["review.mjs"], ["mobile.mjs"]]
+  : [["journeys.mjs"], ["workflow.mjs"], ["notifications.mjs"], ["map.mjs"], ["review.mjs"], ["mobile.mjs"]]
 
 let results = []
 try {

@@ -22,6 +22,7 @@ const customerPaths: Partial<Record<Page, string>> = {
   privacy: "/privacy",
   terms: "/terms",
   refunds: "/refund-policy",
+  credits: "/photo-credits",
   dashboard: "/account",
   bookings: "/account/bookings",
   messages: "/account/messages",

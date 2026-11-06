@@ -4,7 +4,7 @@ import { Assistant, PujaPlan, Recommendation } from "./pages/planning"
 import { adminNav, AdminDashboard } from "./pages/admin"
 import { GenericAuth, Login, Onboarding } from "./pages/auth"
 import { Booking, Checkout, Confirmation, Payment } from "./pages/booking"
-import { Explore, InfoPage, PujaDetails, Samagri } from "./pages/catalogue"
+import { Explore, InfoPage, PhotoCredits, PujaDetails, Samagri } from "./pages/catalogue"
 import { CustomerDashboard } from "./pages/customer"
 import { panditNav, PanditDashboard } from "./pages/pandit"
 import { Emergency, FindPandit, PanditProfile } from "./pages/pandits"
@@ -333,7 +333,8 @@ function Footer({ go }: { go: (p: Page) => void }) {
         <span className="footer-links">
           <button onClick={() => go("privacy")}>Privacy</button> ·{" "}
           <button onClick={() => go("terms")}>Terms</button> ·{" "}
-          <button onClick={() => go("refunds")}>Refund policy</button>
+          <button onClick={() => go("refunds")}>Refund policy</button> ·{" "}
+          <button onClick={() => go("credits")}>Photo credits</button>
         </span>
       </div>
     </footer>
@@ -417,7 +418,7 @@ function PartnerLanding({ go }: { go: (p: Page) => void }) {
 }
 
 const headerlessPages: Page[] = ["assistant", "recommendation", "login", "register", "partner", "onboarding", "checkout", "confirmation", "payment"]
-const customerPages: Page[] = ["home", "explore", "puja", "assistant", "recommendation", "plan", "pandits", "pandit-profile", "booking", "checkout", "payment", "confirmation", "samagri", "emergency", "login", "register", "partner", "onboarding", ...DASHBOARD_PAGES]
+const customerPages: Page[] = ["home", "explore", "puja", "assistant", "recommendation", "plan", "pandits", "pandit-profile", "booking", "checkout", "payment", "confirmation", "samagri", "emergency", "login", "register", "partner", "onboarding", "credits", ...DASHBOARD_PAGES]
 
 function NotFound() {
   const { goHome } = useStore()
@@ -470,6 +471,12 @@ function Routes() {
       {page === "register" && <GenericAuth />}
       {page === "partner" && <PartnerLanding go={go} />}
       {page === "onboarding" && <Onboarding />}
+      {page === "credits" && (
+        <>
+          <PhotoCredits />
+          <Footer go={go} />
+        </>
+      )}
       {DASHBOARD_PAGES.includes(page) && <CustomerDashboard key={page} page={page} />}
       {isInfo && (
         <>

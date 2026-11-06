@@ -1,5 +1,5 @@
 // Final stabilisation review: end-to-end flows, every route, persistence, and awkward paths.
-import { BASE, hashOf as hash, isoDate as iso, KEY, launch, open, urlFor } from "./helpers.mjs"
+import { BASE, hashOf as hash, isoDate as iso, KEY, launch, open, urlFor, writeState } from "./helpers.mjs"
 
 const { browser, page, errors, ctx } = await launch()
 page.setDefaultTimeout(9000)
@@ -23,8 +23,9 @@ const state = () => page.evaluate((k) => JSON.parse(localStorage.getItem(k)), KE
 let nextUrl = null
 const setState = async (p) => {
   const { page: target, ...saved } = p
-  await page.evaluate(([k, s]) => localStorage.setItem(k, JSON.stringify({ ...JSON.parse(localStorage.getItem(k)), ...s })), [KEY, saved])
-  if (target) nextUrl = urlFor({ page: target, role: (await state()).role })
+  const back = page.url()
+  await writeState(page, saved)
+  nextUrl = target ? urlFor({ page: target, role: (await state()).role }) : back
 }
 const reload = async () => {
   await page.goto(nextUrl ?? page.url())
@@ -150,7 +151,7 @@ await guard("admin flow", async () => {
   check("new account does not see another customer's messages", !(await page.locator(".conversation-list").textContent()).includes("Acharya Raghav"))
   await setState({ role: "admin", page: "customers" })
   await reload()
-  check("new account appears for admin", (await page.locator("tbody tr", { hasText: "Sana Khan" }).count()) === 1)
+  check("new account appears for admin", (await page.locator("tbody tr", { hasText: "Sana Khan" }).count()) === 1, `${page.url().replace(BASE, "")} role=${(await state()).role}`)
 
   await open(page, { role: "admin", page: "catalogue", signedIn: true })
   await btn("Add puja").click()
@@ -175,9 +176,7 @@ let blank = [], wrongShell = [], combos = 0
 const crashesBefore = errors.length
 for (const role of ["customer", "pandit", "admin"]) {
   for (const signedIn of role === "customer" ? [false, true] : [true]) {
-    await page.evaluate(([k, raw, role, signedIn]) => {
-      localStorage.setItem(k, JSON.stringify({ ...JSON.parse(raw), role, signedIn }))
-    }, [KEY, seedRaw, role, signedIn])
+    await writeState(page, JSON.stringify({ ...JSON.parse(seedRaw), role, signedIn }))
     for (const p of pages) {
       const url = p === "does-not-exist" ? BASE + "/does-not-exist" : urlFor({ page: p, role })
       await page.goto(url)
@@ -395,6 +394,58 @@ await guard("settings reach customers", async () => {
   check("Enter submits the payment form", true)
 })
 
+section("F2. Photos")
+await guard("photos", async () => {
+  await open(page)
+  const pages = ["/", "/pujas", "/samagri", "/pujas/vivah", "/pujas/rudrabhishek", "/plan", "/book"]
+  const seen = []
+  for (const path of pages) {
+    await page.goto(BASE + path)
+    await page.waitForSelector("#root > *")
+    for (const img of await page.locator("main img").all()) await img.scrollIntoViewIfNeeded()
+    await page.waitForFunction(() => [...document.querySelectorAll("main img")].every((i) => i.complete))
+    const imgs = await page.locator("main img").evaluateAll((list) => list.map((i) => ({ src: i.getAttribute("src"), ok: i.naturalWidth > 0 })))
+    const local = imgs.filter((i) => i.src.startsWith("/assets/"))
+    check(`${path}: no broken local photos`, local.every((i) => i.ok), local.filter((i) => !i.ok).map((i) => i.src).join(", "))
+    seen.push(...local.map((i) => i.src))
+  }
+  const samagri = await (async () => {
+    await page.goto(BASE + "/samagri")
+    await page.waitForSelector(".product-card")
+    return page.locator(".product-card img").evaluateAll((l) => l.map((i) => i.getAttribute("src")))
+  })()
+  const cards = await (async () => {
+    await page.goto(BASE + "/pujas")
+    await page.waitForSelector(".puja-card")
+    return page.locator(".puja-card img").evaluateAll((l) => l.map((i) => i.getAttribute("src")))
+  })()
+  check("samagri photos are not reused on puja cards", samagri.every((s) => !cards.includes(s)), samagri.join(", "))
+  await page.goto(BASE + "/")
+  await page.locator("footer").getByRole("button", { name: "Photo credits" }).click()
+  check("the footer links to photo credits", page.url() === BASE + "/photo-credits")
+  const items = page.locator(".credit-list li")
+  check("every photo is credited", (await items.count()) === 14, String(await items.count()))
+  check("credits name the author and licence", (await items.filter({ hasText: "Vivah Puja" }).textContent()).includes("CC BY-SA 4.0") && (await items.filter({ hasText: "Vivah Puja" }).textContent()).includes("Abhya2022"))
+  check("credit links open in a new tab safely", (await page.locator(".credit-list a").evaluateAll((l) => l.every((a) => a.target === "_blank" && a.rel.includes("noopener")))))
+  await open(page, { signedIn: true, page: "dashboard" })
+  check("the dashboard banner shows the booked puja's own photo", (await page.locator(".upcoming-banner img").getAttribute("src")) === "/assets/pujas/griha-pravesh.jpg")
+})
+await guard("old saved data", async () => {
+  await open(page)
+  const s = await state()
+  const old = s.pujas.filter((p) => !["rudrabhishek", "vivah"].includes(p.id)).map((p) => ({ ...p, image: "https://images.unsplash.com/old.jpg", price: p.id === "ganesh" ? 2700 : p.price }))
+  await writeState(page, { pujas: old, pandits: s.pandits.map((p) => ({ ...p, pujaIds: p.pujaIds.filter((id) => !["rudrabhishek", "vivah"].includes(id)) })) })
+  await page.goto(BASE + "/pujas")
+  await page.waitForSelector(".puja-card")
+  const after = await state()
+  check("saved data from before gets the new photos", after.pujas.every((p) => p.image.startsWith("/assets/pujas/")))
+  check("saved data from before gets the new pujas", after.pujas.some((p) => p.id === "vivah") && after.pujas.some((p) => p.id === "rudrabhishek"))
+  check("admin changes in saved data are kept", after.pujas.find((p) => p.id === "ganesh").price === 2700)
+  await page.goto(BASE + "/pujas/rudrabhishek")
+  await btn("Find an available pandit").click()
+  check("the new pujas have pandits to book", (await page.locator(".pandit-card").count()) > 0)
+})
+
 section("G. Time passing")
 await guard("time travel", async () => {
   await open(page, { signedIn: true, page: "dashboard" })
@@ -430,12 +481,11 @@ await ctx.close()
 
 section("H. Damaged or unavailable storage")
 const ctx2 = await browser.newContext({ viewport: { width: 1440, height: 1000 } })
-await ctx2.route(/images\.unsplash\.com|fonts\.g/, (r) => r.abort())
+await ctx2.route(/images\.unsplash\.com|fonts\.g|openstreetmap\.org|leafletjs\.com/, (r) => r.abort())
 const p2 = await ctx2.newPage()
 p2.setDefaultTimeout(6000)
 const load2 = async (raw, path = "/") => {
-  await p2.goto(BASE + "/")
-  await p2.evaluate(([k, raw]) => localStorage.setItem(k, raw), [KEY, raw])
+  await writeState(p2, raw)
   await p2.goto(BASE + path)
   await p2.waitForTimeout(250)
   return p2.evaluate(() => document.querySelector("#root").innerText.trim())
@@ -456,7 +506,7 @@ const ctx3 = await browser.newContext()
 await ctx3.addInitScript(() => {
   Object.defineProperty(window, "localStorage", { get() { throw new Error("blocked") } })
 })
-await ctx3.route(/images\.unsplash\.com|fonts\.g/, (r) => r.abort())
+await ctx3.route(/images\.unsplash\.com|fonts\.g|openstreetmap\.org|leafletjs\.com/, (r) => r.abort())
 const p3 = await ctx3.newPage()
 await p3.goto(BASE)
 await p3.waitForTimeout(300)

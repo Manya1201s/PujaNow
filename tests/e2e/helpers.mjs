@@ -10,8 +10,9 @@ export const CHANNEL = process.env.E2E_BROWSER ?? "msedge"
 export async function launch(viewport = { width: 1440, height: 1000 }) {
   const browser = await chromium.launch({ channel: CHANNEL, headless: true })
   const ctx = await browser.newContext({ viewport, acceptDownloads: true })
-  // Remote images and fonts are skipped so the tests are fast and work offline.
-  await ctx.route(/images\.unsplash\.com|fonts\.g/, (r) => r.abort())
+  // Remote images, fonts and map tiles are skipped so the tests are fast, work offline,
+  // and send no automated traffic to OpenStreetMap's tile servers or to Wikimedia.
+  await ctx.route(/images\.unsplash\.com|fonts\.g|openstreetmap\.org|leafletjs\.com|wikimedia\.org|creativecommons\.org/, (r) => r.abort())
   const page = await ctx.newPage()
   const errors = []
   page.on("console", (m) => {
@@ -24,6 +25,19 @@ export async function launch(viewport = { width: 1440, height: 1000 }) {
 export const urlFor = ({ page = "home", role = "customer", pujaId = "griha-pravesh", panditId = "raghav", bookingId = "PN-2412-0836" } = {}) =>
   BASE + pathFor(page, role, { pujaId, panditId, bookingId })
 
+/**
+ * Writes saved data while the app is not loaded. A running app saves its own state and could
+ * overwrite a change made underneath it, so this uses a static file on the same site.
+ * Accepts a whole saved string, or fields to merge into what is saved.
+ */
+export async function writeState(page, change) {
+  await page.goto(BASE + "/favicon.png")
+  await page.evaluate(([k, change]) => {
+    if (typeof change === "string") localStorage.setItem(k, change)
+    else localStorage.setItem(k, JSON.stringify({ ...JSON.parse(localStorage.getItem(k) ?? "{}"), ...change }))
+  }, [KEY, change])
+}
+
 /** Starts from fresh sample data, optionally applying saved state and opening a page's URL. */
 export async function open(page, patch = {}) {
   await page.goto(BASE + "/")
@@ -32,10 +46,7 @@ export async function open(page, patch = {}) {
   await page.waitForSelector("#root > *")
   const { page: target, bookingId, ...saved } = patch
   await page.waitForFunction((k) => localStorage.getItem(k), KEY)
-  await page.evaluate(([k, p]) => {
-    const s = JSON.parse(localStorage.getItem(k))
-    localStorage.setItem(k, JSON.stringify({ ...s, ...p }))
-  }, [KEY, saved])
+  await writeState(page, saved)
   await page.goto(urlFor({ page: target ?? "home", role: saved.role ?? "customer", bookingId }))
   await page.waitForSelector("#root > *")
 }

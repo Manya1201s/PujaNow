@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react"
-import { demoBanks, FAIL_BANK, FAIL_CARD, FAIL_UPI, fmtLong, fmtMonth, fmtShort, fmtTimeLeft, fromISO, inr, isRecommendedDate, offeringImage, todayISO, toISO, type Booking as BookingRecord } from "../data"
+import { demoBanks, FAIL_BANK, FAIL_CARD, FAIL_UPI, fmtLong, fmtShort, fmtTimeLeft, fromISO, inr, isRecommendedDate, defaultPujaImage, todayISO, toISO, type Booking as BookingRecord } from "../data"
 import { openSlots, totalsFor, useStore } from "../store"
 import { Badge, Brand, EMAIL_ERROR, Field, Icon, isEmail, isPhone, PHONE_ERROR, Rating, useForm } from "../ui"
 
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+const MONTHS = Array.from({ length: 12 }, (_, m) => new Date(2000, m, 1).toLocaleDateString("en-GB", { month: "long" }))
 const MAX_YEARS_AHEAD = 2
 
 export function Booking() {
@@ -75,25 +76,32 @@ export function Booking() {
           <p>Recommended muhurats are based on your occasion and location.</p>
           <div className="calendar-card">
             <div className="calendar-head">
-              <div className="calendar-nav">
-                <button type="button" aria-label="Previous year" disabled={monthIndex - 12 < minIndex} onClick={() => moveTo(monthIndex - 12)}>
-                  <Icon name="back" size={17} />
-                  <Icon name="back" size={17} className="calendar-double" />
-                </button>
-                <button type="button" aria-label="Previous month" disabled={monthIndex <= minIndex} onClick={() => moveTo(monthIndex - 1)}>
-                  <Icon name="back" size={17} />
-                </button>
+              <button type="button" aria-label="Previous month" disabled={monthIndex <= minIndex} onClick={() => moveTo(monthIndex - 1)}>
+                <Icon name="back" size={17} />
+              </button>
+              <div className="calendar-title" role="group" aria-label="Month and year">
+                <select aria-label="Month" value={view.month} onChange={(e) => moveTo(view.year * 12 + Number(e.target.value))}>
+                  {MONTHS.map((name, m) => {
+                    const index = view.year * 12 + m
+                    return (
+                      <option key={name} value={m} disabled={index < minIndex || index > maxIndex}>
+                        {name}
+                      </option>
+                    )
+                  })}
+                </select>
+                {/* A month that does not exist in the new year is moved to the nearest one that does. */}
+                <select aria-label="Year" value={view.year} onChange={(e) => moveTo(Number(e.target.value) * 12 + view.month)}>
+                  {Array.from({ length: MAX_YEARS_AHEAD + 1 }, (_, i) => now.getFullYear() + i).map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <h3>{fmtMonth(view.year, view.month)}</h3>
-              <div className="calendar-nav">
-                <button type="button" aria-label="Next month" disabled={monthIndex >= maxIndex} onClick={() => moveTo(monthIndex + 1)}>
-                  <Icon name="arrow" size={17} />
-                </button>
-                <button type="button" aria-label="Next year" disabled={monthIndex + 12 > maxIndex} onClick={() => moveTo(monthIndex + 12)}>
-                  <Icon name="arrow" size={17} className="calendar-double" />
-                  <Icon name="arrow" size={17} />
-                </button>
-              </div>
+              <button type="button" aria-label="Next month" disabled={monthIndex >= maxIndex} onClick={() => moveTo(monthIndex + 1)}>
+                <Icon name="arrow" size={17} />
+              </button>
             </div>
             <div className="calendar-grid">
               {WEEKDAYS.map((x) => (
@@ -652,7 +660,7 @@ export function Payment() {
         </div>
         <OrderCard
           pujaName={booking.pujaName}
-          image={pujas.find((p) => p.id === booking.pujaId)?.image ?? offeringImage}
+          image={pujas.find((p) => p.id === booking.pujaId)?.image ?? defaultPujaImage}
           date={booking.date}
           time={booking.time}
           dakshina={booking.dakshina}

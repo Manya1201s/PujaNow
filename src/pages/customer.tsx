@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
-import { addDays, daysUntil, fmtLong, fmtShort, fmtStamp, fmtTimeLeft, inr, ritualImage, todayISO, type Booking, type Page } from "../data"
+import { addDays, daysUntil, fmtLong, fmtShort, fmtStamp, fmtTimeLeft, inr, todayISO, type Booking, type Page } from "../data"
 import { AppShell, type NavItem } from "../shell"
 import { openSlots, useStore, type Profile } from "../store"
 import { Badge, ConfirmModal, EMAIL_ERROR, EmptyState, Field, Icon, isEmail, isPhone, Modal, PHONE_ERROR, Rating, StatusBadge, useForm } from "../ui"
@@ -14,7 +14,7 @@ const customerNav: NavItem[] = [
 const isUpcoming = (b: Booking) => b.status === "Confirmed" || b.status === "Pending" || b.status === "Awaiting payment"
 
 export function CustomerDashboard({ page }: { page: Page }) {
-  const { go, bookings, threads, profile, messagePandit, payFor } = useStore()
+  const { go, bookings, threads, profile, messagePandit, payFor, pujas } = useStore()
   const mine = bookings.filter((b) => b.mine)
   const upcoming = mine
     .filter((b) => isUpcoming(b) && b.date >= todayISO())
@@ -78,7 +78,7 @@ export function CustomerDashboard({ page }: { page: Page }) {
                   </button>
                 )}
               </div>
-              <img src={ritualImage} alt="Puja ceremony" />
+              <img src={pujas.find((p) => p.id === next.pujaId)?.image} alt={next.pujaName} />
             </div>
           ) : (
             <EmptyState

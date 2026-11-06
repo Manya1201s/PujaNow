@@ -1,6 +1,8 @@
-import { useState } from "react"
+import { lazy, Suspense, useState } from "react"
 import { addDays, CITIES, fmtDay, fmtShort, inr, isPanditFree, LANGUAGES, todayISO, type Pandit } from "../data"
 import { openSlots, totalsFor, useStore } from "../store"
+// The map library is large, so it loads only when this page is opened.
+const PanditMap = lazy(() => import("./pandit-map").then((m) => ({ default: m.PanditMap })))
 import { Badge, Dropdown, EmptyState, Field, FilterButton, Icon, isPhone, PanditCard, PHONE_ERROR, Rating, useForm } from "../ui"
 
 const priceBands: Record<string, (p: number) => boolean> = {
@@ -112,18 +114,9 @@ export function FindPandit() {
             />
           )}
         </div>
-        <aside className="map-card">
-          <div className="map-grid" />
-          {results.slice(0, 3).map((p, i) => (
-            <div key={p.id} className={`map-pin ${["one", "two", "three"][i]}`}>
-              ₹{(p.price / 1000).toFixed(1)}k
-            </div>
-          ))}
-          <div className="map-label">
-            <b>{results.length} experts nearby</b>
-            <span>Within 18 km of your home</span>
-          </div>
-        </aside>
+        <Suspense fallback={<aside className="map-card" aria-label="Loading the map" />}>
+          <PanditMap pandits={results} city={draft.city} />
+        </Suspense>
       </div>
     </main>
   )

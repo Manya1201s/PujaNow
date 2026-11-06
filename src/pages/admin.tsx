@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react"
-import { CATEGORIES, daysUntil, fmtShort, inr, LANGUAGES, offeringImage, PUJA_TYPES, seedBookings, type Booking, type Complaint, type Customer, type Page, type Pandit, type Puja, type VerificationRequest } from "../data"
+import { CATEGORIES, daysUntil, fmtShort, inr, LANGUAGES, defaultPujaImage, PUJA_TYPES, seedBookings, type Booking, type Complaint, type Customer, type Page, type Pandit, type Puja, type VerificationRequest } from "../data"
 import { AppShell, type NavItem } from "../shell"
 import { useStore } from "../store"
 import { ConfirmModal, Dropdown, EmptyState, Field, Icon, isPhone, Modal, PHONE_ERROR, StatusBadge, useForm } from "../ui"
@@ -560,7 +560,7 @@ function PujaForm({ puja, onClose }: { puja: Puja | null; onClose: () => void })
                   {
                     ...fields,
                     id: newId,
-                    image: offeringImage,
+                    image: defaultPujaImage,
                     categories: [v.category],
                     languages: LANGUAGES.slice(0, 2),
                     occasions: [],

@@ -1,14 +1,12 @@
 // Demo data and pure helpers for the PujaNow frontend MVP. There is no backend yet.
 
 export type Role = "customer" | "pandit" | "admin"
-export type Page = "home" | "explore" | "puja" | "assistant" | "recommendation" | "plan" | "pandits" | "pandit-profile" | "booking" | "checkout" | "confirmation" | "dashboard" | "bookings" | "messages" | "profile" | "emergency" | "samagri" | "login" | "register" | "partner" | "onboarding" | "verification" | "requests" | "upcoming" | "completed" | "earnings" | "reviews" | "admin-overview" | "customers" | "pandit-management" | "admin-verification" | "catalogue" | "booking-management" | "payments" | "commission" | "complaints" | "reports" | "settings" | "about" | "trust" | "help" | "privacy" | "terms" | "refunds" | "payment" | "not-found"
+export type Page = "home" | "explore" | "puja" | "assistant" | "recommendation" | "plan" | "pandits" | "pandit-profile" | "booking" | "checkout" | "confirmation" | "dashboard" | "bookings" | "messages" | "profile" | "emergency" | "samagri" | "login" | "register" | "partner" | "onboarding" | "verification" | "requests" | "upcoming" | "completed" | "earnings" | "reviews" | "admin-overview" | "customers" | "pandit-management" | "admin-verification" | "catalogue" | "booking-management" | "payments" | "commission" | "complaints" | "reports" | "settings" | "about" | "trust" | "help" | "privacy" | "terms" | "refunds" | "payment" | "not-found" | "credits"
 
-export const ritualImage =
-  "https://images.unsplash.com/photo-1680491025190-269d21ac8326?auto=format&fit=crop&w=1000&q=86"
-export const offeringImage =
-  "https://images.unsplash.com/photo-1627419375575-6cb2faa849b3?auto=format&fit=crop&w=1000&q=86"
-const ganeshImage =
-  "https://images.unsplash.com/photo-1605764803170-c20b43be4d00?auto=format&fit=crop&w=800&q=85"
+// Each puja has its own photo, stored in public/assets/pujas. Credits are in src/photo-credits.json.
+const pujaPhoto = (name: string) => `${import.meta.env.BASE_URL}assets/pujas/${name}.jpg`
+/** Used for pujas an administrator adds, until they can upload their own photo. */
+export const defaultPujaImage = pujaPhoto("default")
 const thaliImage =
   "https://images.unsplash.com/photo-1680490964889-67a5ab8d8b54?auto=format&fit=crop&w=700&q=85"
 
@@ -67,7 +65,7 @@ export const seedPujas: Puja[] = [
     time: "2–3 hrs",
     hours: 3,
     price: 5100,
-    image: offeringImage,
+    image: pujaPhoto("griha-pravesh"),
     categories: ["New beginnings"],
     type: "Home ceremony",
     languages: ["Hindi", "English"],
@@ -95,7 +93,7 @@ export const seedPujas: Puja[] = [
     time: "2 hrs",
     hours: 2,
     price: 3500,
-    image: ritualImage,
+    image: pujaPhoto("satyanarayan"),
     categories: ["Prosperity", "Wellbeing"],
     type: "Home ceremony",
     languages: ["Hindi", "English", "Sanskrit"],
@@ -116,7 +114,7 @@ export const seedPujas: Puja[] = [
     time: "1.5 hrs",
     hours: 1.5,
     price: 2500,
-    image: ganeshImage,
+    image: pujaPhoto("ganesh"),
     categories: ["New beginnings", "Prosperity"],
     type: "Home ceremony",
     languages: ["Hindi", "English", "Marathi"],
@@ -137,7 +135,7 @@ export const seedPujas: Puja[] = [
     time: "2–3 hrs",
     hours: 3,
     price: 5100,
-    image: offeringImage,
+    image: pujaPhoto("lakshmi"),
     categories: ["Prosperity", "Festivals"],
     type: "Festival puja",
     languages: ["Hindi", "English", "Gujarati"],
@@ -157,7 +155,7 @@ export const seedPujas: Puja[] = [
     time: "2 hrs",
     hours: 2,
     price: 3500,
-    image: ritualImage,
+    image: pujaPhoto("mahamrityunjaya"),
     categories: ["Wellbeing"],
     type: "Havan & jaap",
     languages: ["Hindi", "Sanskrit"],
@@ -177,7 +175,7 @@ export const seedPujas: Puja[] = [
     time: "1.5 hrs",
     hours: 1.5,
     price: 2500,
-    image: ganeshImage,
+    image: pujaPhoto("navgraha"),
     categories: ["Wellbeing"],
     type: "Havan & jaap",
     languages: ["Hindi", "Sanskrit", "Marathi"],
@@ -197,7 +195,7 @@ export const seedPujas: Puja[] = [
     time: "3 hrs",
     hours: 3,
     price: 4200,
-    image: ritualImage,
+    image: pujaPhoto("durga"),
     categories: ["Festivals"],
     type: "Festival puja",
     languages: ["Hindi", "English", "Gujarati"],
@@ -217,7 +215,7 @@ export const seedPujas: Puja[] = [
     time: "2 hrs",
     hours: 2,
     price: 3100,
-    image: offeringImage,
+    image: pujaPhoto("pitru-shraddh"),
     categories: ["Ancestral rituals"],
     type: "Ancestral ritual",
     languages: ["Hindi", "Sanskrit"],
@@ -237,7 +235,7 @@ export const seedPujas: Puja[] = [
     time: "4–5 hrs",
     hours: 5,
     price: 7500,
-    image: ritualImage,
+    image: pujaPhoto("narayan-bali"),
     categories: ["Ancestral rituals"],
     type: "Ancestral ritual",
     languages: ["Hindi", "Sanskrit", "Marathi"],
@@ -248,6 +246,53 @@ export const seedPujas: Puja[] = [
       "Narayan Bali is an elaborate ancestral ritual performed by families seeking peace for departed relatives, guided closely by an experienced pandit.",
     included: standardIncluded,
     prepare: standardPrepare,
+    active: true,
+  },
+  {
+    id: "rudrabhishek",
+    name: "Rudrabhishek",
+    meta: "For Lord Shiva’s blessings and peace",
+    time: "2–3 hrs",
+    hours: 3,
+    price: 4100,
+    image: pujaPhoto("rudrabhishek"),
+    categories: ["Wellbeing"],
+    type: "Havan & jaap",
+    languages: ["Hindi", "Sanskrit"],
+    occasions: ["shravan", "mahashivratri", "monday prayers"],
+    benefits: ["peace", "health", "removing obstacles", "spiritual growth"],
+    overline: "SHIVA ABHISHEK",
+    about:
+      "Rudrabhishek is the ritual bathing of the Shiva lingam with milk, water, honey and bel leaves while the Rudram is chanted, offered for peace, health and Lord Shiva’s blessings.",
+    included: standardIncluded,
+    prepare: standardPrepare,
+    active: true,
+  },
+  {
+    id: "vivah",
+    name: "Vivah Puja",
+    meta: "For a sacred Hindu wedding",
+    time: "3–4 hrs",
+    hours: 4,
+    price: 11000,
+    image: pujaPhoto("vivah"),
+    categories: ["New beginnings"],
+    type: "Home ceremony",
+    languages: ["Hindi", "Sanskrit", "English"],
+    occasions: ["wedding", "marriage", "shaadi"],
+    benefits: ["marital harmony", "blessings for the couple", "family union"],
+    overline: "WEDDING CEREMONY",
+    about:
+      "Vivah Puja covers the sacred rituals of a Hindu wedding, including kanyadaan, the seven pheras around the sacred fire and the exchange of vows, led by an experienced pandit.",
+    included: [
+      "Pre-wedding consultation with your family",
+      "Complete Vedic wedding rituals and havan",
+      "Guidance through the seven pheras",
+      "Coordination with your family on the day",
+      "Optional complete samagri kit",
+    ],
+    prepare:
+      "Share your muhurat and venue details early. Your pandit will plan the order of rituals with your family and the venue.",
     active: true,
   },
 ]
@@ -310,7 +355,7 @@ export const seedPandits: Pandit[] = [
     about: "Warm and punctual pandit who conducts household and festival ceremonies in Hindi, Gujarati and English.",
     bio: "Pandit Mohit has conducted household and festival ceremonies across Delhi NCR for over a decade, with a particular focus on young families performing a ritual for the first time.",
     specialisations: ["Griha Pravesh", "Lakshmi Puja", "Navratri Durga Puja", "Satyanarayan Puja"],
-    pujaIds: ["griha-pravesh", "lakshmi", "durga", "satyanarayan", "ganesh"],
+    pujaIds: ["griha-pravesh", "lakshmi", "durga", "satyanarayan", "ganesh", "vivah"],
     status: "Active",
     available: true,
   },
@@ -329,7 +374,7 @@ export const seedPandits: Pandit[] = [
     about: "Scholar of Vedic and ancestral rituals, known for precise recitation and patient guidance.",
     bio: "Acharya Vivek is sought after for wellbeing and ancestral rituals, and helps families understand each stage of the ceremony before it begins.",
     specialisations: ["Mahamrityunjaya Jaap", "Navgraha Shanti", "Pitru Paksha Shraddh", "Narayan Bali", "Ganesh Puja"],
-    pujaIds: ["griha-pravesh", "mahamrityunjaya", "navgraha", "pitru-shraddh", "narayan-bali", "ganesh"],
+    pujaIds: ["griha-pravesh", "mahamrityunjaya", "navgraha", "pitru-shraddh", "narayan-bali", "ganesh", "rudrabhishek"],
     status: "Active",
     available: true,
   },
@@ -356,8 +401,8 @@ export const seedPandits: Pandit[] = [
 
 export type Product = { id: string; name: string; meta: string; price: number; image: string }
 export const products: Product[] = [
-  { id: "griha-kit", name: "Complete Griha Pravesh Kit", meta: "35+ items · Serves 6", price: 1899, image: offeringImage },
-  { id: "havan", name: "Premium Havan Essentials", meta: "Organic, temple-grade ingredients", price: 899, image: ritualImage },
+  { id: "griha-kit", name: "Complete Griha Pravesh Kit", meta: "35+ items · Serves 6", price: 1899, image: pujaPhoto("samagri-kit") },
+  { id: "havan", name: "Premium Havan Essentials", meta: "Organic, temple-grade ingredients", price: 899, image: pujaPhoto("samagri-havan") },
   { id: "thali", name: "Brass Puja Thali Set", meta: "Hand-finished · 8 pieces", price: 1499, image: thaliImage },
 ]
 
@@ -393,8 +438,6 @@ export const fmtDay = (iso: string) => {
   const d = fromISO(iso)
   return `${d.toLocaleDateString("en-GB", { weekday: "short" })}, ${fmtShort(iso)}`
 }
-export const fmtMonth = (year: number, month: number) =>
-  new Date(year, month, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
 
 export function fmtStamp(at: string) {
   const d = new Date(at)
@@ -450,6 +493,48 @@ export function fmtTimeLeft(at: string | null) {
 }
 export const isRecommendedDate = (date: string) => fromISO(date).getDate() % 14 <= 1
 export const isPanditFree = (panditId: string, date: string) => hash(panditId + date) % 6 !== 0
+
+// ---- Map locations ----
+// No real addresses exist yet. Pandits are placed at demo positions near their city's centre,
+// and the map labels them as demo locations.
+
+export type Point = { lat: number; lng: number }
+
+/** Approximate public city-centre coordinates, used only to place demo markers. */
+const CITY_CENTRES: Record<string, Point> = {
+  Gurugram: { lat: 28.4595, lng: 77.0266 },
+  "New Delhi": { lat: 28.6139, lng: 77.209 },
+  Noida: { lat: 28.5355, lng: 77.391 },
+  Jaipur: { lat: 26.9124, lng: 75.7873 },
+  Pune: { lat: 18.5204, lng: 73.8567 },
+  Ahmedabad: { lat: 23.0225, lng: 72.5714 },
+  Mumbai: { lat: 19.076, lng: 72.8777 },
+  Bengaluru: { lat: 12.9716, lng: 77.5946 },
+}
+
+export const cityCentre = (city: string): Point | null => CITY_CENTRES[city.trim()] ?? null
+
+/** A fixed demo position 2–8 km from the pandit's city centre. Not a real address. */
+export function demoPosition(p: Pick<Pandit, "id" | "city">): Point | null {
+  const centre = cityCentre(p.city)
+  if (!centre) return null
+  const h = hash(p.id)
+  const angle = ((h % 360) * Math.PI) / 180
+  const km = 2 + ((h >>> 9) % 7)
+  return {
+    lat: centre.lat + (km / 111) * Math.cos(angle),
+    lng: centre.lng + (km / (111 * Math.cos((centre.lat * Math.PI) / 180))) * Math.sin(angle),
+  }
+}
+
+/** Straight-line distance in kilometres. */
+export function distanceKm(a: Point, b: Point) {
+  const rad = Math.PI / 180
+  const dLat = (b.lat - a.lat) * rad
+  const dLng = (b.lng - a.lng) * rad
+  const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2
+  return 12742 * Math.asin(Math.sqrt(x))
+}
 
 // ---- Records ----
 
@@ -666,14 +751,40 @@ export const seedPayouts = (): Payout[] => [
   { id: "PO-3051", panditId: "raghav", date: addDays(-21), amount: 16900, status: "Paid" },
 ]
 
-export type Notice = { id: string; role: Role; panditId?: string; text: string; page: Page; read: boolean }
+export type Notice = {
+  id: string
+  role: Role
+  panditId?: string
+  title?: string
+  text: string
+  page: Page
+  /** When set, opening the notice goes to this booking or conversation instead of the page. */
+  bookingId?: string
+  threadId?: string
+  at?: string
+  read: boolean
+}
+
+const noticeTitles: Partial<Record<Page, string>> = {
+  messages: "New message",
+  bookings: "Booking update",
+  requests: "New booking request",
+  upcoming: "Booking update",
+  earnings: "Earnings update",
+  "admin-verification": "Verification request",
+  complaints: "New complaint",
+  "booking-management": "Booking update",
+  payments: "Payment update",
+}
+/** Older saved notices have no title, so one is taken from where they lead. */
+export const noticeTitle = (n: Notice) => n.title ?? noticeTitles[n.page] ?? "Update"
 export const seedNotices: Notice[] = [
-  { id: "n1", role: "customer", text: "Acharya Raghav sent you a new message", page: "messages", read: false },
-  { id: "n2", role: "customer", text: "Acharya Vivek accepted your Navgraha Shanti request. Payment is now due.", page: "bookings", read: false },
-  { id: "n3", role: "pandit", panditId: "raghav", text: "You have new booking requests", page: "requests", read: false },
-  { id: "n4", role: "pandit", panditId: "raghav", text: "Your latest payout was completed", page: "earnings", read: false },
-  { id: "n5", role: "admin", text: "New pandit verification requests are waiting", page: "admin-verification", read: false },
-  { id: "n6", role: "admin", text: "A complaint needs your review", page: "complaints", read: false },
+  { id: "n1", role: "customer", title: "New message", text: "Acharya Raghav sent you a new message", page: "messages", threadId: "pandit-raghav", at: ago(92), read: false },
+  { id: "n2", role: "customer", title: "Booking accepted", text: "Acharya Vivek accepted your Navgraha Shanti request. Payment is now due.", page: "bookings", bookingId: "PN-2501-0104", at: ago(120), read: false },
+  { id: "n3", role: "pandit", panditId: "raghav", title: "New booking requests", text: "You have new booking requests", page: "requests", at: ago(60), read: false },
+  { id: "n4", role: "pandit", panditId: "raghav", title: "Payout completed", text: "Your latest payout was completed", page: "earnings", at: ago(10080), read: false },
+  { id: "n5", role: "admin", title: "Verification requests", text: "New pandit verification requests are waiting", page: "admin-verification", at: ago(180), read: false },
+  { id: "n6", role: "admin", title: "New complaint", text: "A complaint needs your review", page: "complaints", at: ago(1440), read: false },
 ]
 
 export const infoPages: Partial<Record<Page, { overline: string; title: string; text: string; sections: [string, string][] }>> = {

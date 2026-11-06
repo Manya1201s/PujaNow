@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
-import type { Page, Role } from "./data"
+import { fmtStamp, noticeTitle, type Page, type Role } from "./data"
 import { useStore } from "./store"
 import { Brand, Dropdown, Icon } from "./ui"
 
@@ -18,7 +18,7 @@ export function AppShell({
   badges?: Partial<Record<Page, number>>
   children: ReactNode
 }) {
-  const { go, signOut, profile, panditProfile, notices, update, patch, pandits, activePanditId } = useStore()
+  const { go, signOut, profile, panditProfile, notices, patch, pandits, activePanditId, openNotice, markAllRead } = useStore()
   const [mobile, setMobile] = useState(false)
   const [query, setQuery] = useState("")
   const [noticesOpen, setNoticesOpen] = useState(false)
@@ -32,8 +32,15 @@ export function AppShell({
       // The open sidebar covers the menu button on phones, so tapping outside closes it.
       if (!(e.target as Element).closest?.(".sidebar, .app-topbar > .menu-button")) setMobile(false)
     }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setNoticesOpen(false)
+    }
     document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
+    document.addEventListener("keydown", onKey)
+    return () => {
+      document.removeEventListener("mousedown", handler)
+      document.removeEventListener("keydown", onKey)
+    }
   }, [])
 
   const mine = notices.filter((n) => n.role === role && (!n.panditId || n.panditId === activePanditId))
@@ -125,35 +132,46 @@ export function AppShell({
             <div className="dropdown" ref={noticesRef}>
               <button
                 type="button"
-                className="notification"
+                className="bell-button"
                 aria-label={`Notifications, ${unread} unread`}
                 aria-expanded={noticesOpen}
+                aria-haspopup="menu"
                 onClick={() => setNoticesOpen(!noticesOpen)}
               >
-                {unread}
+                <Icon name="bell" size={19} />
+                {unread > 0 && <span className="bell-badge">{unread > 9 ? "9+" : unread}</span>}
               </button>
               {noticesOpen && (
-                <div className="popover notices" role="menu">
-                  <b>Notifications</b>
+                <div className="popover notices" role="menu" aria-label="Notifications">
+                  <div className="notices-head">
+                    <b>Notifications</b>
+                    {unread > 0 && (
+                      <button type="button" className="mark-all" onClick={() => markAllRead(mine.filter((n) => !n.read).map((n) => n.id))}>
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
                   {mine.map((n) => (
                     <button
                       type="button"
                       role="menuitem"
                       key={n.id}
-                      className={n.read ? "" : "active"}
+                      className={`notice ${n.read ? "" : "unread"}`}
                       onClick={() => {
-                        update((s) => ({
-                          ...s,
-                          notices: s.notices.map((x) => (x.id === n.id ? { ...x, read: true } : x)),
-                        }))
                         setNoticesOpen(false)
-                        go(n.page)
+                        openNotice(n)
                       }}
                     >
-                      {n.text}
+                      <i aria-hidden="true" />
+                      <span>
+                        <b>{noticeTitle(n)}</b>
+                        <span>{n.text}</span>
+                        {n.at && <small>{fmtStamp(n.at)}</small>}
+                      </span>
+                      {!n.read && <span className="sr-only">Unread</span>}
                     </button>
                   ))}
-                  {mine.length === 0 && <span>You’re all caught up</span>}
+                  {mine.length === 0 && <span className="notices-empty">You’re all caught up</span>}
                 </div>
               )}
             </div>

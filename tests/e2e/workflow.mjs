@@ -1,5 +1,5 @@
 // The approval-before-payment workflow, its expiry rules, and real URLs.
-import { BASE, isBusy, isoDate, KEY, launch, open, reporter, urlFor } from "./helpers.mjs"
+import { BASE, isBusy, isoDate, KEY, launch, open, reporter, urlFor, writeState } from "./helpers.mjs"
 
 const { browser, page, errors, ctx } = await launch()
 page.setDefaultTimeout(9000)
@@ -23,7 +23,13 @@ const guard = async (name, fn) => {
     check(`${name} (no crash)`, false, e.message.split("\n").slice(0, 2).join(" ").slice(0, 220))
   }
 }
-const saveState = (p) => page.evaluate(([k, p]) => localStorage.setItem(k, JSON.stringify({ ...JSON.parse(localStorage.getItem(k)), ...p })), [KEY, p])
+// Saves state while the app is not loaded, then returns to the same page.
+const saveState = async (p) => {
+  const back = page.url()
+  await writeState(page, p)
+  await page.goto(back)
+  await page.waitForSelector("#root > *")
+}
 async function asRole(role, target, extra = {}) {
   await saveState({ role, signedIn: true, ...extra })
   await page.goto(urlFor({ page: target, role, bookingId: extra.bookingId }))

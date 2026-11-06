@@ -148,6 +148,18 @@ function restore(saved: Record<string, unknown>): State {
     if (expected === null || sameShape) restored[key] = value
   }
   const state = restored as State
+  // Catalogue photos and newly added sample pujas come from the code, while admin edits are kept.
+  state.pujas = [
+    ...state.pujas.map((p) => {
+      const fresh = base.pujas.find((x) => x.id === p.id)
+      return fresh ? { ...p, image: fresh.image } : p
+    }),
+    ...base.pujas.filter((x) => !state.pujas.some((p) => p.id === x.id)),
+  ]
+  state.pandits = state.pandits.map((p) => {
+    const fresh = base.pandits.find((x) => x.id === p.id)
+    return fresh ? { ...p, pujaIds: [...new Set([...p.pujaIds, ...fresh.pujaIds])] } : p
+  })
   if (!state.threads.length) state.threads = base.threads
   // A date saved on an earlier visit may have passed since.
   if (state.draft.date && state.draft.date < todayISO()) state.draft = { ...state.draft, date: null, time: null }
@@ -217,9 +229,13 @@ export function openSlots(s: Pick<State, "bookings">, date: string, panditId: st
   return slotsFor(date, panditId).filter((t) => !taken.includes(t))
 }
 
-const addNotice = (s: State, role: Role, text: string, page: Page, panditId?: string): State => ({
+type NoticeLink = { title?: string; bookingId?: string; threadId?: string }
+const addNotice = (s: State, role: Role, text: string, page: Page, panditId?: string, link: NoticeLink = {}): State => ({
   ...s,
-  notices: [{ id: `n${Date.now()}-${s.notices.length}`, role, panditId, text, page, read: false }, ...s.notices],
+  notices: [
+    { id: `n${Date.now()}-${s.notices.length}`, role, panditId, text, page, read: false, at: new Date().toISOString(), ...link },
+    ...s.notices,
+  ],
 })
 
 /** Closes requests whose response or payment time has run out, and frees their slots. */
@@ -242,8 +258,8 @@ function expireBookings(s: State): State {
       b.status === "Pending"
         ? `${b.panditName} did not respond in time, so your ${b.pujaName} request expired. You have not been charged.`
         : `The payment time for your ${b.pujaName} booking ran out, so it expired. You have not been charged.`
-    if (b.mine) next = addNotice(next, "customer", text, "bookings")
-    next = addNotice(next, "pandit", `${b.pujaName} request from ${b.customer} expired`, "requests", b.panditId)
+    if (b.mine) next = addNotice(next, "customer", text, "bookings", undefined, { title: "Request expired", bookingId: b.id })
+    next = addNotice(next, "pandit", `${b.pujaName} request from ${b.customer} expired`, "requests", b.panditId, { title: "Request expired" })
     next = addNotice(next, "admin", `${b.id} expired`, "booking-management")
   }
   return next
@@ -478,7 +494,7 @@ function useStoreValue() {
     }
     update((cur) => ({
       ...addNotice(
-        addNotice(cur, "pandit", `New booking request: ${t.puja.name} from ${booking.customer}`, "requests", t.pandit.id),
+        addNotice(cur, "pandit", `New booking request: ${t.puja.name} from ${booking.customer}`, "requests", t.pandit.id, { title: "New booking request", bookingId: id }),
         "admin",
         `New booking request ${id}`,
         "booking-management",
@@ -524,6 +540,8 @@ function useStoreValue() {
             ? `${b.panditName} accepted your ${b.pujaName} request. Payment is now due.`
             : `${b.panditName} declined your ${b.pujaName} request. You have not been charged.`,
           "bookings",
+          undefined,
+          { title: accepted ? "Booking accepted" : "Request declined", bookingId: id },
         )
       }
       return addNotice(next, "admin", `${b.panditName} ${accepted ? "accepted" : "declined"} ${b.id}`, "booking-management")
@@ -550,7 +568,7 @@ function useStoreValue() {
         ),
       }
       return addNotice(
-        addNotice(next, "pandit", `${b.customer} paid for ${b.pujaName}. The booking is confirmed.`, "upcoming", b.panditId),
+        addNotice(next, "pandit", `${b.customer} paid for ${b.pujaName}. The booking is confirmed.`, "upcoming", b.panditId, { title: "Payment received", bookingId: id }),
         "admin",
         `${id} confirmed after demo payment`,
         "payments",
@@ -573,8 +591,10 @@ function useStoreValue() {
           x.id === id ? { ...x, status: "Completed" as const, payoutStatus: "Released" as const, commission, payout } : x,
         ),
       }
-      const withPandit = addNotice(next, "pandit", `${inr(payout)} released for ${b.pujaName} after ${inr(commission)} commission`, "earnings", b.panditId)
-      return b.mine ? addNotice(withPandit, "customer", `Your ${b.pujaName} is complete. You can now leave a review.`, "bookings") : withPandit
+      const withPandit = addNotice(next, "pandit", `${inr(payout)} released for ${b.pujaName} after ${inr(commission)} commission`, "earnings", b.panditId, { title: "Payment released" })
+      return b.mine
+        ? addNotice(withPandit, "customer", `Your ${b.pujaName} is complete. You can now leave a review.`, "bookings", undefined, { title: "Puja completed", bookingId: id })
+        : withPandit
     })
   }
 
@@ -596,7 +616,7 @@ function useStoreValue() {
             : x,
         ),
       }
-      return addNotice(next, "pandit", `${b.pujaName} for ${b.customer} was cancelled`, "upcoming", b.panditId)
+      return addNotice(next, "pandit", `${b.pujaName} for ${b.customer} was cancelled`, "upcoming", b.panditId, { title: "Booking cancelled" })
     })
   }
 
@@ -627,8 +647,15 @@ function useStoreValue() {
   }
 
   const addMessage = (threadId: string, from: "me" | "them", text: string) =>
-    update((s) => ({
-      ...s,
+    update((s) => {
+      const thread = s.threads.find((t) => t.id === threadId)
+      const viewing = s.role === "customer" && s.page === "messages" && s.activeThread === threadId
+      const withNotice =
+        from === "them" && thread && !viewing
+          ? addNotice(s, "customer", `${thread.name} sent you a new message`, "messages", undefined, { title: "New message", threadId })
+          : s
+      return {
+      ...withNotice,
       threads: s.threads.map((t) =>
         t.id === threadId
           ? {
@@ -639,7 +666,8 @@ function useStoreValue() {
             }
           : t,
       ),
-    }))
+      }
+    })
 
   const sendMessage = (threadId: string, text: string) => {
     addMessage(threadId, "me", text)
@@ -696,6 +724,21 @@ function useStoreValue() {
       update((s) => ({ ...s, draft: { ...s.draft, pujaId: b.pujaId, date: null, time: null } }))
       go("pandits")
     },
+    /** Marks a notice read and opens what it is about. */
+    openNotice: (n: Notice) => {
+      update((s) => ({ ...s, notices: s.notices.map((x) => (x.id === n.id ? { ...x, read: true } : x)) }))
+      const s = ref.current
+      const booking = n.bookingId ? s.bookings.find((b) => b.id === n.bookingId && b.mine) : undefined
+      if (n.role === "customer" && booking) {
+        patch({ lastBookingId: booking.id })
+        go(booking.status === "Awaiting payment" ? "payment" : "confirmation")
+      } else if (n.threadId && s.threads.some((t) => t.id === n.threadId)) {
+        openThread(n.threadId)
+        go("messages")
+      } else go(n.page)
+    },
+    markAllRead: (ids: string[]) =>
+      update((s) => ({ ...s, notices: s.notices.map((x) => (ids.includes(x.id) ? { ...x, read: true } : x)) })),
     viewBooking: (id: string) => {
       patch({ lastBookingId: id })
       go("confirmation")

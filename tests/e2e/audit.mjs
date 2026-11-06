@@ -1,7 +1,7 @@
 // Dead-control audit against the production build: on every page, click each visible control once
 // and flag any that changes nothing. Results are written as it goes.
 import fs from "node:fs"
-import { BASE, CHANNEL, KEY, urlFor } from "./helpers.mjs"
+import { BASE, CHANNEL, KEY, urlFor, writeState } from "./helpers.mjs"
 import { chromium } from "playwright-core"
 
 const mobile = process.argv[2] === "mobile"
@@ -14,7 +14,7 @@ const log = (s) => {
   console.log(s)
 }
 
-const customerPublic = ["home", "explore", "puja", "assistant", "recommendation", "plan", "pandits", "pandit-profile", "booking", "emergency", "samagri", "login", "register", "partner", "onboarding", "about", "trust", "help", "privacy", "terms", "refunds"]
+const customerPublic = ["home", "explore", "puja", "assistant", "recommendation", "plan", "pandits", "pandit-profile", "booking", "emergency", "samagri", "login", "register", "partner", "onboarding", "about", "trust", "help", "privacy", "terms", "refunds", "credits"]
 const targets = [
   ...customerPublic.map((p) => ["customer", p, false]),
   ...["checkout", "payment", "confirmation", "dashboard", "bookings", "messages", "profile"].map((p) => ["customer", p, true]),
@@ -26,7 +26,8 @@ const SEL = 'button:not([disabled]), [role="button"], a[href], input[type="radio
 
 const browser = await chromium.launch({ channel: CHANNEL, headless: true })
 const ctx = await browser.newContext({ viewport, acceptDownloads: true })
-await ctx.route(/images\.unsplash\.com|fonts\.g/, (r) => r.abort())
+// External sites are never contacted. A link that opens one in a new tab still counts as working.
+await ctx.route(/images\.unsplash\.com|fonts\.g|openstreetmap\.org|leafletjs\.com|wikimedia\.org|creativecommons\.org/, (r) => r.abort())
 const errors = []
 let page
 
@@ -49,7 +50,7 @@ async function prepare(role, name, signedIn) {
   const s = JSON.parse(seed)
   Object.assign(s, { role, signedIn })
   if (name === "checkout") Object.assign(s.draft, soon)
-  await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, JSON.stringify(s)])
+  await writeState(page, JSON.stringify(s))
   await page.goto(urlFor({ page: name, role, bookingId: name === "payment" ? "PN-2501-0104" : "PN-2412-0836" }))
   await page.waitForSelector("#root > *")
 }
@@ -57,7 +58,7 @@ async function prepare(role, name, signedIn) {
 // Clicks that rightly change nothing: a link to the page you are on, or Send with an empty box.
 const EXPECTED = new Set([
   "customer/home|PujaNow home", "customer/explore|Explore pujas", "customer/pandits|Find a pandit", "customer/samagri|Samagri",
-  "customer/about|About PujaNow", "customer/trust|Trust & safety", "customer/help|Help centre", "customer/privacy|Privacy", "customer/terms|Terms", "customer/refunds|Refund policy",
+  "customer/about|About PujaNow", "customer/trust|Trust & safety", "customer/help|Help centre", "customer/privacy|Privacy", "customer/terms|Terms", "customer/refunds|Refund policy", "customer/credits|Photo credits",
   "customer/messages|Send message", "pandit/dashboard|PujaNow home", "admin/admin-overview|PujaNow home",
 ])
 
@@ -102,10 +103,14 @@ for (const [role, name, signedIn] of targets) {
       const before = await snapshot()
       // Clicking a radio that is already selected is correctly a no-op.
       if (c.checked && (await el.getAttribute("type")) === "radio") continue
+      const newTab = ctx.waitForEvent("page", { timeout: 600 }).catch(() => null)
       await el.click({ timeout: 2500 })
       clicks++
       await page.waitForTimeout(80)
-      if ((await snapshot()) === before) {
+      const opened = await newTab
+      // New tabs are closed straight away so they cannot pile up and slow the browser.
+      if (opened) await opened.close()
+      if (!opened && (await snapshot()) === before) {
         if (c.current || EXPECTED.has(`${role}/${name}|${c.label}`)) expected++
         else {
           dead.push(`${role}/${name}: "${c.label}" did nothing`)
