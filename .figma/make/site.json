@@ -1,0 +1,10 @@
+{
+  "description": "Plan pujas, discover verified pandits, book at-home services, and manage payments and rituals in one convenient platform for Indian households.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
