@@ -1,0 +1,202 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    overflow-x: hidden;
+    @apply bg-cream-100 text-charcoal-700 font-body;
+    line-height: 1.6;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display text-charcoal-800;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    @apply bg-primary-200 text-primary-900;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent-400 ring-offset-2 ring-offset-cream-100;
+  }
+  input[type='date']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: .6;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm whitespace-nowrap
+      transition-all duration-300 ease-out select-none
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-100
+      active:scale-[.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+  .btn-primary {
+    @apply btn text-cream-50 bg-gradient-to-br from-primary-600 to-primary-800 shadow-[0_8px_20px_-8px_rgba(100,30,43,.6)]
+      hover:shadow-[0_14px_28px_-10px_rgba(100,30,43,.7)] hover:-translate-y-px focus-visible:ring-primary-400;
+  }
+  .btn-accent {
+    @apply btn text-charcoal-800 bg-gradient-to-br from-accent-300 to-accent-500 shadow-[0_8px_20px_-8px_rgba(198,161,91,.7)]
+      hover:shadow-[0_14px_28px_-10px_rgba(198,161,91,.8)] hover:-translate-y-px focus-visible:ring-accent-300;
+  }
+  .btn-outline {
+    @apply btn border border-primary-200 text-primary-700 bg-cream-50/60 hover:bg-primary-50 hover:border-primary-300 focus-visible:ring-primary-300;
+  }
+  .btn-light {
+    @apply btn border border-cream-50/30 text-cream-50 bg-cream-50/10 backdrop-blur-md hover:bg-cream-50/20 hover:border-cream-50/50 focus-visible:ring-cream-50/60 focus-visible:ring-offset-transparent;
+  }
+  .btn-ghost {
+    @apply btn text-charcoal-500 hover:bg-cream-200 hover:text-charcoal-700 focus-visible:ring-charcoal-300;
+  }
+  .btn-danger {
+    @apply btn bg-error-600 text-white hover:bg-error-700 focus-visible:ring-error-300;
+  }
+  .btn-lg {
+    @apply px-7 py-3.5 text-[15px];
+  }
+  .icon-btn {
+    @apply relative inline-flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:bg-cream-200 active:scale-95;
+  }
+
+  .card {
+    @apply bg-cream-50 rounded-2xl shadow-soft border border-cream-300/70 transition-all duration-300;
+  }
+  .card-hover {
+    @apply card hover:shadow-luxe hover:-translate-y-1 hover:border-accent-300/70;
+  }
+
+  .input {
+    @apply w-full px-4 py-3 rounded-xl border border-cream-400/80 bg-white/70 text-charcoal-700 text-sm placeholder-charcoal-300
+      focus:outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-400 focus:bg-white transition-all;
+  }
+  .input-error {
+    @apply border-error-400 focus:ring-error-100 focus:border-error-500;
+  }
+  .label {
+    @apply flex items-center gap-1.5 text-[13px] font-medium text-charcoal-600 mb-1.5;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium border border-cream-400/80 bg-cream-50 text-charcoal-600
+      transition-all duration-200 hover:border-primary-300 hover:text-primary-700 whitespace-nowrap;
+  }
+  .chip-active {
+    @apply border-primary-700 bg-primary-700 text-cream-50 hover:text-cream-50 hover:border-primary-700 shadow-soft;
+  }
+  .section {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2.5 text-accent-700 font-semibold text-[11px] uppercase tracking-[.22em];
+  }
+  .eyebrow::before {
+    content: '';
+    @apply block w-6 h-px bg-gradient-to-r from-transparent to-accent-500;
+  }
+  .eyebrow-light {
+    @apply text-accent-300;
+  }
+  .skeleton {
+    @apply bg-gradient-to-r from-cream-200 via-cream-300/70 to-cream-200 bg-[length:1000px_100%] animate-shimmer rounded-lg;
+  }
+  .link-arrow {
+    @apply inline-flex items-center gap-1.5 text-sm font-medium text-primary-700 hover:gap-2.5 transition-all;
+  }
+  .surface-dark {
+    @apply relative bg-primary-800 text-cream-50 overflow-hidden;
+    background-image:
+      radial-gradient(ellipse 60% 80% at 85% 0%, rgba(198, 161, 91, .22), transparent 60%),
+      radial-gradient(ellipse 50% 70% at 0% 100%, rgba(38, 10, 16, .6), transparent 60%),
+      linear-gradient(135deg, #7B2638 0%, #641E2B 45%, #3C111A 100%);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .bg-pattern {
+    background-image: radial-gradient(circle at 1px 1px, rgba(122, 110, 102, 0.08) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+  /* Four-petal rangoli motif, tiled */
+  .bg-rangoli {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cg fill='none' stroke='%23C6A15B' stroke-opacity='.22' stroke-width='1'%3E%3Cpath d='M36 8c7 9 7 19 0 28-7-9-7-19 0-28z'/%3E%3Cpath d='M36 64c7-9 7-19 0-28-7 9-7 19 0 28z'/%3E%3Cpath d='M8 36c9-7 19-7 28 0-9 7-19 7-28 0z'/%3E%3Cpath d='M64 36c-9-7-19-7-28 0 9 7 19 7 28 0z'/%3E%3Ccircle cx='36' cy='36' r='2.5'/%3E%3Ccircle cx='0' cy='0' r='3'/%3E%3Ccircle cx='72' cy='0' r='3'/%3E%3Ccircle cx='0' cy='72' r='3'/%3E%3Ccircle cx='72' cy='72' r='3'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 72px 72px;
+  }
+  .bg-rangoli-light {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cg fill='none' stroke='%23641E2B' stroke-opacity='.07' stroke-width='1'%3E%3Cpath d='M36 8c7 9 7 19 0 28-7-9-7-19 0-28z'/%3E%3Cpath d='M36 64c7-9 7-19 0-28-7 9-7 19 0 28z'/%3E%3Cpath d='M8 36c9-7 19-7 28 0-9 7-19 7-28 0z'/%3E%3Cpath d='M64 36c-9-7-19-7-28 0 9 7 19 7 28 0z'/%3E%3Ccircle cx='36' cy='36' r='2.5'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 72px 72px;
+  }
+  /* Temple-arch frame */
+  .arch {
+    border-radius: 999px 999px 1.25rem 1.25rem;
+  }
+  .heritage-rule {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(198, 161, 91, .75), transparent);
+  }
+  .text-gradient-gold {
+    background: linear-gradient(100deg, #EFD699 0%, #C6A15B 45%, #F7EBCF 70%, #C6A15B 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .mask-fade-x {
+    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  }
+
+  /* Scroll reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .8s cubic-bezier(.22, 1, .36, 1), transform .8s cubic-bezier(.22, 1, .36, 1);
+    will-change: opacity, transform;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+  .page-enter {
+    animation: pageEnter .45s cubic-bezier(.22, 1, .36, 1);
+  }
+  /* Opacity only: a transform here would break position:fixed descendants mid-animation */
+  @keyframes pageEnter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+    .reveal {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
